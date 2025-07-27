@@ -1,0 +1,1 @@
+# gateways package - 外部API通信専用
