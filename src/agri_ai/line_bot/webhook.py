@@ -11,9 +11,16 @@ import logging
 import concurrent.futures
 
 from ..core.config import settings
-from ..core.master_agent import master_agent
+# from ..core.master_agent import master_agent  # 従来システム（コメントアウト）
 from ..core.confirmation_middleware import ConfirmationMiddleware
 from ..core.session_manager import SessionManager
+
+# LangGraphシステムの統合
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../langgraph_prototype/src'))
+from agri_ai.langgraph.supervisor import app as langgraph_app
+from agri_ai.langgraph.state import AgriAgentState
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +58,7 @@ async def health_check():
         return {
             "status": "healthy",
             "database": db_health,
-            "agent": "initialized" if master_agent.agent_executor else "not_initialized",
+            "agent": "langgraph_initialized",
         }
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}
@@ -111,26 +118,54 @@ async def _process_message_async(message_text: str, user_id: str, reply_token: s
             logger.info(f"確認フロー応答送信完了 - ユーザー: {user_id}")
             return
         
-        # Step 2: 通常のエージェント処理
+        # Step 2: LangGraphエージェント処理
         if middleware_result.get("requires_agent_processing"):
-            # MasterAgentが初期化されているか確認
-            if not master_agent.agent_executor:
-                logger.info("MasterAgentが初期化されていません。初回リクエストのため初期化します。")
-                master_agent.initialize()
-
-            # メモリ付きエージェントを作成
-            agent_executor = master_agent.create_agent_with_memory(user_id)
+            logger.info(f"LangGraphシステム実行開始 - ユーザー: {user_id}")
             
-            # エージェント実行
-            result = agent_executor.invoke({"input": message_text})
-            response_text = result.get("output", "申し訳ございませんが、処理できませんでした。")
+            # セッション管理と連携したthread_idの取得
+            thread_id = session_manager.get_or_create_session(user_id)
             
-            # 確認フロー対応の結果解析
+            # LangGraphの状態を作成
+            initial_state = AgriAgentState(
+                messages=[{"role": "user", "content": message_text}],
+                user_id=user_id,
+                thread_id=thread_id,
+                next_agent="",
+                pending_confirmation={},
+                final_response="",
+                intermediate_steps=[]
+            )
+            
+            logger.debug(f"LangGraph状態作成 - user_id: {user_id}, thread_id: {thread_id}")
+            
+            # LangGraphワークフロー実行
+            try:
+                result = await langgraph_app.ainvoke(initial_state)
+                response_text = result.get("final_response", "申し訳ございませんが、処理できませんでした。")
+                
+                # セッション情報の更新
+                session_manager.update_last_activity(user_id)
+                
+                # デバッグ情報
+                intermediate_steps = result.get("intermediate_steps", [])
+                if intermediate_steps:
+                    logger.info(f"LangGraph実行ステップ: {len(intermediate_steps)}ステップ")
+                    for step in intermediate_steps:
+                        logger.debug(f"  - {step}")
+                        
+                # 結果の永続化（将来的にLangGraphの状態永続化と統合）
+                logger.debug(f"LangGraph処理完了 - 応答長: {len(response_text)}文字")
+                        
+            except Exception as e:
+                logger.error(f"LangGraph実行エラー: {e}")
+                response_text = "申し訳ございませんが、システム処理中にエラーが発生しました。"
+            
+            # 確認フロー対応の結果解析（LangGraph対応）
             if _is_confirmation_response(response_text):
-                confirmation_data = _extract_confirmation_data(response_text, result)
+                confirmation_data = _extract_confirmation_data_langgraph(response_text, result)
                 if confirmation_data:
-                    # 確認データからエージェントタイプを取得（より正確）
-                    agent_type = confirmation_data.get("agent_type") or _detect_agent_type(response_text, result)
+                    # LangGraphから実行されたエージェント情報を取得
+                    agent_type = _detect_agent_type_langgraph(result)
                     confirmation_middleware.save_confirmation_request(
                         user_id, agent_type, confirmation_data
                     )
@@ -282,6 +317,72 @@ async def push_message(data: Dict[str, Any]):
     except Exception as e:
         logger.error(f"プッシュメッセージ送信エラー: {e}")
         raise HTTPException(status_code=500, detail="Failed to send push message")
+
+
+# LangGraph対応のヘルパー関数
+def _extract_confirmation_data_langgraph(response_text: str, langgraph_result: dict) -> dict:
+    """
+    LangGraphの結果から確認データを抽出
+    
+    Args:
+        response_text: 応答テキスト
+        langgraph_result: LangGraphの実行結果
+        
+    Returns:
+        確認データ辞書
+    """
+    try:
+        # LangGraphの結果から確認に必要な情報を抽出
+        confirmation_data = {
+            "original_message": response_text,
+            "agent_steps": langgraph_result.get("intermediate_steps", []),
+            "user_id": langgraph_result.get("user_id", ""),
+            "pending_confirmation": langgraph_result.get("pending_confirmation", {})
+        }
+        
+        # 既存の確認データ抽出ロジックも併用
+        legacy_data = _extract_confirmation_data(response_text, {"output": response_text})
+        if legacy_data:
+            confirmation_data.update(legacy_data)
+            
+        return confirmation_data
+        
+    except Exception as e:
+        logger.error(f"LangGraph確認データ抽出エラー: {e}")
+        return {}
+
+
+def _detect_agent_type_langgraph(langgraph_result: dict) -> str:
+    """
+    LangGraphの実行結果からエージェントタイプを検出
+    
+    Args:
+        langgraph_result: LangGraphの実行結果
+        
+    Returns:
+        エージェントタイプ
+    """
+    try:
+        # 中間ステップからエージェント情報を取得
+        intermediate_steps = langgraph_result.get("intermediate_steps", [])
+        
+        for step in intermediate_steps:
+            if "ReadAgent" in step:
+                return "read_agent"
+            elif "WriteAgent" in step:
+                return "write_agent"
+        
+        # next_agentフィールドからも確認
+        next_agent = langgraph_result.get("next_agent", "")
+        if next_agent:
+            return next_agent
+            
+        # デフォルト
+        return "supervisor_agent"
+        
+    except Exception as e:
+        logger.error(f"LangGraphエージェントタイプ検出エラー: {e}")
+        return "unknown_agent"
 
 
 if __name__ == "__main__":
