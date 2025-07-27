@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LangGraph農業AIエージェント - フロー図</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .diagram { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 LangGraph農業AIエージェント - システムフロー</h1>
+        <p>生成日時: 2025-07-28 05:48:59</p>
+    </div>
+    
+    <div class="diagram">
+        <div class="mermaid">
+
+graph TD
+    A[👤 ユーザー] --> B[📨 LINE メッセージ]
+    B --> C[🧠 SupervisorAgent<br/>意図分析]
+    
+    C -->|Read意図| D[📖 ReadAgent<br/>データ読み取り]
+    C -->|Write意図| E[✏️ WriteAgent<br/>データ書き込み]
+    C -->|不明| F[❓ デフォルト処理]
+    
+    D --> G[🔧 ToolExecution<br/>FieldInfoTool<br/>WorkLogSearchTool]
+    E --> H[🔧 ToolExecution<br/>WorkLogRegistrationTool]
+    
+    G --> I[📤 READ応答]
+    H --> J[📤 WRITE応答]
+    F --> K[📤 ERROR応答]
+    
+    I --> L[📱 LINE応答]
+    J --> L
+    K --> L
+    
+    style A fill:#e1f5fe
+    style C fill:#f3e5f5
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style L fill:#fce4ec
+
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

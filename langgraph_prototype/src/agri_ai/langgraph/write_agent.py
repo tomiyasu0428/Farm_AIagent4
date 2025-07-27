@@ -11,7 +11,7 @@ from ..langchain_tools.work_log_registration_agent_tool import WorkLogRegistrati
 # from ..langchain_tools.field_registration_agent_tool import FieldRegistrationAgentTool  # 一時的にコメントアウト
 from ..agents.work_log_registration_agent import WorkLogRegistrationAgent
 # from ..agents.field_registration_agent import FieldRegistrationAgent  # 一時的にコメントアウト
-from ..core.config import settings
+from shared.config.settings import settings
 
 logger = logging.getLogger(__name__)
 

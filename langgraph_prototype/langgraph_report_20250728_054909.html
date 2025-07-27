@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LangGraph実行レポート</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .log-entry { border: 1px solid #ddd; margin: 20px 0; padding: 15px; }
+        .step { background: #f5f5f5; margin: 10px 0; padding: 10px; }
+        .success { color: green; }
+        .error { color: red; }
+        .performance { background: #e3f2fd; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 LangGraph実行レポート</h1>
+        <p>生成日時: 2025-07-28 05:49:09</p>
+    </div>
+
+    <div class="log-entry">
+        <h2>🎯 実行 1: 圃場の情報を教えて</h2>
+        <div class="performance">
+            <strong>パフォーマンス:</strong>
+            総実行時間: 3.889秒 |
+            ステップ数: 2 |
+            ユーザー: trace_user
+        </div>
+        
+        <div class="success">
+            <strong>結果:</strong> ✅ 成功
+        </div>
+
+        <div class="step">
+            <strong>ステップ 1</strong> (1.103秒) - 
+            ノード: supervisor
+<br>　supervisor: 次のエージェント=read_agent ステップ=SupervisorAgent: read意図を検出 → read_agentにルーティング... </div>
+        <div class="step">
+            <strong>ステップ 2</strong> (3.887秒) - 
+            ノード: read_agent
+<br>　read_agent: 次のエージェント=read_agent ステップ=ReadAgent: LLMがツールを選択・実行... </div></div>
+    <div class="log-entry">
+        <h2>🎯 実行 2: 昨日トマトの水やりをしました</h2>
+        <div class="performance">
+            <strong>パフォーマンス:</strong>
+            総実行時間: 2.594秒 |
+            ステップ数: 2 |
+            ユーザー: trace_user
+        </div>
+        
+        <div class="success">
+            <strong>結果:</strong> ✅ 成功
+        </div>
+
+        <div class="step">
+            <strong>ステップ 1</strong> (1.33秒) - 
+            ノード: supervisor
+<br>　supervisor: 次のエージェント=write_agent ステップ=SupervisorAgent: write意図を検出 → write_agentにルーティング... </div>
+        <div class="step">
+            <strong>ステップ 2</strong> (2.594秒) - 
+            ノード: write_agent
+<br>　write_agent: 次のエージェント=write_agent ステップ=WriteAgent: LLMがツールを選択・実行... </div></div>
+    <div class="log-entry">
+        <h2>🎯 実行 3: 作業履歴を確認したい</h2>
+        <div class="performance">
+            <strong>パフォーマンス:</strong>
+            総実行時間: 2.221秒 |
+            ステップ数: 2 |
+            ユーザー: trace_user
+        </div>
+        
+        <div class="success">
+            <strong>結果:</strong> ✅ 成功
+        </div>
+
+        <div class="step">
+            <strong>ステップ 1</strong> (0.954秒) - 
+            ノード: supervisor
+<br>　supervisor: 次のエージェント=read_agent ステップ=SupervisorAgent: read意図を検出 → read_agentにルーティング... </div>
+        <div class="step">
+            <strong>ステップ 2</strong> (2.221秒) - 
+            ノード: read_agent
+<br>　read_agent: 次のエージェント=read_agent ステップ=ReadAgent: LLMがツールを選択・実行... </div></div>
+</body>
+</html>

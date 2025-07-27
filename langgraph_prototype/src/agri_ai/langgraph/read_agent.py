@@ -12,7 +12,7 @@ from ..langchain_tools.work_log_search_agent_tool import WorkLogSearchAgentTool
 from ..langchain_tools.field_agent_tool import FieldAgentTool
 from ..agents.field_agent import FieldAgent
 from ..agents.work_log_search_agent import WorkLogSearchAgent
-from ..core.config import settings
+from shared.config.settings import settings
 
 logger = logging.getLogger(__name__)
 

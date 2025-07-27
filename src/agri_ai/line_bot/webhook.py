@@ -10,7 +10,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import logging
 import concurrent.futures
 
-from ..core.config import settings
+from shared.config.settings import settings
 # from ..core.master_agent import master_agent  # 従来システム（コメントアウト）
 from ..core.confirmation_middleware import ConfirmationMiddleware
 from ..core.session_manager import SessionManager

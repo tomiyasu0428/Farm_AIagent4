@@ -5,7 +5,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from .state import AgriAgentState
 from .read_agent import ReadAgent
 from .write_agent import WriteAgent
-from ..core.config import settings
+from shared.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
